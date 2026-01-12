@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>XPay STORE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- XPay JS SDK V4 (Staging) -->
+  <script src="https://js.xstak.com/v4/xpay-stage.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --secondary: #22c55e;
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --text-light: #e5e7eb;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 1.5rem;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Sections */
+    h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+
+    /* Product Grid */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+    }
+
+    .product-img {
+      width: 100%;
+      height: 140px;
+      background: #334155;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+
+    .product-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .product-price {
+      color: var(--secondary);
+      font-weight: 700;
+      font-size: 1.1rem;
+      flex-grow: 1;
+    }
+
+    .add-btn {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.6rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .add-btn:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    /* Cart / Checkout Sidebar */
+    .sidebar {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      height: fit-content;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cart-item span {
+      font-size: 0.9rem;
+    }
+
+    .remove-btn {
+      color: #ef4444;
+      cursor: pointer;
+      font-size: 0.8rem;
+      background: none;
+      border: none;
+    }
+
+    .total {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.2rem;
+      font-weight: 800;
+      border-top: 2px solid rgba(255, 255, 255, 0.1);
+      padding-top: 1rem;
+    }
+
+    .checkout-btn {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--secondary);
+      color: #000;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .checkout-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Payment Form (Hidden initially) */
+    #paymentView {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.4rem;
+      color: #94a3b8;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.6rem;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+    }
+
+    .status-box {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .status-box.visible {
+      display: block;
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+    }
+
+    .success {
+      background: rgba(34, 197, 94, 0.2);
+      color: #86efac;
+    }
+
+    /* Navigation */
+    .back-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .back-btn:hover {
+      color: white;
+    }
+
+    .empty-cart-msg {
+      color: #64748b;
+      text-align: center;
+      padding: 2rem 0;
+      font-style: italic;
+    }
+
+    /* Payment Options Styling */
+    .payment-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .option-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 0.5rem;
+    }
+
+    .option-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .option-card.selected {
+      border-color: var(--secondary);
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .option-card input {
+      display: none;
+    }
+
+    .option-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.2rem;
+    }
+
+    /* Gallery Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .modal-content {
+      position: relative;
+      max-width: 90%;
+      max-height: 80vh;
+      display: flex;
+      justify-content: center;
+    }
+
+    .modal-img {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: #f1f1f1;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1001;
+    }
+
+    .prev,
+    .next {
+      cursor: pointer;
+      position: absolute;
+      top: 50%;
+      width: auto;
+      padding: 16px;
+      margin-top: -50px;
+      color: white;
+      font-weight: bold;
+      font-size: 20px;
+      transition: 0.2s;
+      border-radius: 0 3px 3px 0;
+      user-select: none;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .next {
+      right: 0;
+      border-radius: 3px 0 0 3px;
+    }
+
+    .prev {
+      left: 0;
+      border-radius: 3px 0 0 3px;
+    }
+
+    .prev:hover,
+    .next:hover {
+      background-color: rgba(99, 102, 241, 0.8);
+    }
+
+    .gallery-counter {
+      color: #f2f2f2;
+      font-size: 14px;
+      padding: 8px 12px;
+      position: absolute;
+      bottom: -40px;
+      width: 100%;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="logo">XPay STORE</div>
+    <div id="headerCart">Cart (0)</div>
+  </header>
+
+  <div class="container">
+
+    <!-- PRODUCT CATALOG SECTION -->
+    <section id="shopSection">
+      <h2>Latest Arrivals</h2>
+      <div class="products">
+
+        <div class="product-card">
+          <div class="product-img" onclick="openProductGallery('headphones')" style="cursor: pointer;">
+            <img src="headphones.png" alt="Headphones" style="width:100%; height:100%; object-fit:contain;">
+          </div>
+          <div class="product-title">Premium Wireless Headphones</div>
+          <div class="product-price">120 PKR</div>
+          <button class="add-btn" onclick="addToCart('headphones', 120, 'Premium Wireless Headphones')">Add to
+            Cart</button>
+        </div>
+
+        <div class="product-card">
+          <div class="product-img" onclick="openProductGallery('watch')" style="cursor: pointer;">
+            <img src="watch.png" alt="Smart Watch" style="width:100%; height:100%; object-fit:contain;">
+          </div>
+          <div class="product-title">Smart Fitness Watch</div>
+          <div class="product-price">86 PKR</div>
+          <button class="add-btn" onclick="addToCart('watch', 86, 'Smart Fitness Watch')">Add to Cart</button>
+        </div>
+
+        <div class="product-card">
+          <div class="product-img" onclick="openProductGallery('keyboard')" style="cursor: pointer;">
+            <img src="keyboard.png" alt="Mechanical Keyboard" style="width:100%; height:100%; object-fit:contain;">
+          </div>
+          <div class="product-title">Mechanical Keyboard</div>
+          <div class="product-price">140 PKR</div>
+          <button class="add-btn" onclick="addToCart('keyboard', 140, 'Mechanical Keyboard')">Add to Cart</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CHECKOUT SIDEBAR -->
+    <aside class="sidebar">
+
+      <!-- Cart View -->
+      <div id="cartView">
+        <h2>Your Cart</h2>
+        <div id="cartItems">
+          <div class="empty-cart-msg">Your cart is empty</div>
+        </div>
+
+        <div class="total">
+          <span>Total</span>
+          <span id="cartTotal">0.00 PKR</span>
+        </div>
+
+        <button id="checkoutBtn" class="checkout-btn" disabled onclick="proceedToDetails()">Proceed to Checkout</button>
+      </div>
+
+      <!-- Payment View (Normally Hidden) -->
+      <!-- Payment View (Normally Hidden) -->
+      <div id="paymentView">
+        <button class="back-btn" onclick="cancelCheckout()">← Back to Cart</button>
+
+        <h2>Customer Details</h2>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="custName" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="custEmail" placeholder="john@example.com">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="custPhone" placeholder="+1 234 567 8900">
+        </div>
+        <div class="form-group">
+          <label>Billing Address</label>
+          <input type="text" id="custAddress" placeholder="123 Main St, New York, NY">
+        </div>
+
+        <button id="initPaymentBtn" class="checkout-btn" style="margin-top: 1rem; background: #6366f1;"
+          onclick="startCheckout()">Continue to Payment</button>
+
+        <!-- Payment Selection (Hidden until details are confirmed) -->
+        <div id="paymentUI"
+          style="display: none; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem;">
+          <h2>Payment Options</h2>
+          <div class="payment-grid">
+            <label class="option-card selected" id="optCard" onclick="selectOption('Card')">
+              <input type="radio" name="paymentMethod" value="Card" checked>
+              <div class="option-icon">💳</div>
+              <div>Credit Card</div>
+            </label>
+            <label class="option-card" id="optCOD" onclick="selectOption('COD')">
+              <input type="radio" name="paymentMethod" value="COD">
+              <div class="option-icon">💵</div>
+              <div>Cash on Delivery</div>
+            </label>
+          </div>
+
+          <div id="cardDetailsSection">
+            <h3 style="font-size: 1rem; margin-bottom: 1rem; color: #94a3b8;">Card Details</h3>
+            <div class="form-group">
+              <label>Cardholder Name</label>
+              <input type="text" id="cardHolderName" placeholder="John Doe">
+            </div>
+            <!-- Real XPay Fusion Element will be mounted here -->
+            <div id="xpay-element"
+              style="min-height: 100px; padding: 10px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            </div>
+          </div>
+
+          <button id="payBtn" class="checkout-btn" onclick="handlePaymentAction()">Pay Now</button>
+
+          <div id="statusBox" class="status-box"></div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <div id="galleryModal" class="modal">
+    <span class="close-modal" onclick="closeGallery()">&times;</span>
+    <div class="modal-content">
+      <a class="prev" onclick="changeSlide(-1)">&#10094;</a>
+      <img id="galleryImage" class="modal-img" src="">
+      <a class="next" onclick="changeSlide(1)">&#10095;</a>
+    </div>
+    <div id="galleryCounter" class="gallery-counter">1 / 3</div>
+  </div>
+
+  <script>
+    // --- STATE ---
+    let cart = [];
+    let paymentIntent = null;
+    let xpayInstance = null;
+
+    // Real XPay Credentials
+    const XPAY_PUB_CONFIG = {
+      PUBLISHABLE_KEY: "xpay_pk_test_cd34f2bbe9f993ef8094eaf4684dc3c83d46b4ca52126b7d62a8705f7acc4c33",
+      ACCOUNT_ID: "0ddb82950784f875",
+      HMAC_SECRET: "bf2526d2a4111e94e865be48794034bb8dce6362d03ae698fd81fc95ad71fce0"
+    };
+
+    // --- CART LOGIC ---
+    function addToCart(id, price, name) {
+      cart.push({ id, price, name });
+      updateCartUI();
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const cartItemsEl = document.getElementById("cartItems");
+      const cartTotalEl = document.getElementById("cartTotal");
+      const checkoutBtn = document.getElementById("checkoutBtn");
+      const headerCart = document.getElementById("headerCart");
+
+      // Update Header
+      headerCart.textContent = `Cart (${cart.length})`;
+
+      // Update Items List
+      if (cart.length === 0) {
+        cartItemsEl.innerHTML = '<div class="empty-cart-msg">Your cart is empty</div>';
+        checkoutBtn.disabled = true;
+        cartTotalEl.textContent = "$0.00";
+        return;
+      }
+
+      checkoutBtn.disabled = false;
+      cartItemsEl.innerHTML = "";
+      let total = 0;
+
+      cart.forEach((item, index) => {
+        total += item.price;
+        const div = document.createElement("div");
+        div.className = "cart-item";
+        div.innerHTML = `
+            <div>
+              <div style="font-weight:600">${item.name}</div>
+              <div style="color:#94a3b8; font-size: 0.8rem">${Math.round(item.price)} PKR</div>
+            </div>
+            <button class="remove-btn" onclick="removeFromCart(${index})">Remove</button>
+          `;
+        cartItemsEl.appendChild(div);
+      });
+
+      cartTotalEl.textContent = Math.round(total) + " PKR";
+    }
+
+    function getTotalAmount() {
+      return Math.round(cart.reduce((sum, item) => sum + item.price, 0));
+    }
+
+
+    // --- CHECKOUT FLOW ---
+
+    // Step 1: Initialize Session
+    function proceedToDetails() {
+      document.getElementById("cartView").style.display = "none";
+      document.getElementById("paymentView").style.display = "block";
+      document.getElementById("paymentUI").style.display = "none";
+      document.getElementById("initPaymentBtn").style.display = "block";
+    }
+
+    async function startCheckout() {
+      const initBtn = document.getElementById("initPaymentBtn");
+      const paymentUI = document.getElementById("paymentUI");
+      const payBtn = document.getElementById("payBtn");
+
+      // Validate Fields FIRST
+      const name = document.getElementById("custName").value.trim();
+      const email = document.getElementById("custEmail").value.trim();
+      const phone = document.getElementById("custPhone").value.trim();
+      const address = document.getElementById("custAddress").value.trim();
+
+      if (!name || !email || !phone || !address) {
+        alert("Please fill in all customer details (Name, Email, Phone, Address) first.");
+        return;
+      }
+
+      initBtn.disabled = true;
+      initBtn.textContent = "Processing...";
+
+      try {
+        const totalAmount = getTotalAmount();
+        const orderId = "ORD-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+        // API Call to Backend (Signs with HMAC on server)
+        const res = await fetch("/api/create-payment-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: totalAmount,
+            currency: "PKR",
+            customer: { name, email, phone },
+            shipping: { address1: address, city: "City", country: "Pakistan", province: "State", zip: "12345" },
+            orderId: orderId
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Could not initialize payment");
+        }
+
+        paymentIntent = await res.json();
+
+        // Show Payment Section
+        initBtn.style.display = "none";
+        paymentUI.style.display = "block";
+
+        // 2. Initialize XPay SDK & Element
+        if (!xpayInstance) {
+          xpayInstance = new Xpay(
+            XPAY_PUB_CONFIG.PUBLISHABLE_KEY,
+            XPAY_PUB_CONFIG.ACCOUNT_ID,
+            XPAY_PUB_CONFIG.HMAC_SECRET
+          );
+        }
+
+        // Mount the Fusion element
+        xpayInstance.element("#xpay-element", {
+          style: {
+            ".input": {
+              "color": "#ffffff",
+              "background-color": "transparent",
+              "border": "none",
+              "font-size": "16px"
+            }
+          }
+        });
+
+        // Ready to Pay
+        payBtn.disabled = false;
+        payBtn.textContent = `Pay ${Math.round(paymentIntent.amount)} ${paymentIntent.currency}`;
+
+      } catch (err) {
+        alert("Initialization Error: " + err.message);
+        initBtn.disabled = false;
+        initBtn.textContent = "Continue to Payment";
+      }
+    }
+
+    function cancelCheckout() {
+      document.getElementById("paymentView").style.display = "none";
+      document.getElementById("cartView").style.display = "block";
+      paymentIntent = null;
+    }
+
+    // Toggle Payment Method UI Logic
+    function selectOption(method) {
+      // Logic handled via radio inputs, but we add visual classes here
+      document.getElementById('optCard').classList.remove('selected');
+      document.getElementById('optCOD').classList.remove('selected');
+
+      if (method === 'Card') {
+        document.getElementById('optCard').classList.add('selected');
+        document.querySelector('input[value="Card"]').checked = true;
+      } else {
+        document.getElementById('optCOD').classList.add('selected');
+        document.querySelector('input[value="COD"]').checked = true;
+      }
+      togglePaymentMethod();
+    }
+
+    // Toggle Payment Method UI
+    function togglePaymentMethod() {
+      const method = document.querySelector('input[name="paymentMethod"]:checked').value;
+      const cardSection = document.getElementById("cardDetailsSection");
+      const payBtn = document.getElementById("payBtn");
+
+      if (method === 'COD') {
+        cardSection.style.display = 'none';
+        payBtn.textContent = 'Place Order';
+      } else {
+        cardSection.style.display = 'block';
+        if (paymentIntent) {
+          payBtn.textContent = `Pay ${Math.round(paymentIntent.amount)} ${paymentIntent.currency}`;
+        } else {
+          payBtn.textContent = 'Pay Now';
+        }
+      }
+    }
+
+    // Main Action Handler (replaces confirmPayment)
+    async function handlePaymentAction() {
+      // Common Validation
+      const name = document.getElementById("custName").value;
+      const email = document.getElementById("custEmail").value;
+      const phone = document.getElementById("custPhone").value;
+      const address = document.getElementById("custAddress").value;
+
+      if (!name || !email || !phone || !address) {
+        showStatus("Please fill in all customer details", true);
+        return;
+      }
+
+      const method = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+      if (method === 'COD') {
+        // Handle COD directly
+        // Use XPay ID if intent exists, otherwise fallback to custom for COD
+        const codOrderId = paymentIntent ? paymentIntent.orderId : "ORD_COD_" + Date.now();
+        await finalizeOrder(null, { name, email, phone, address }, 'COD', codOrderId);
+      } else {
+        // Validation for Cardholder Name
+        const cardName = document.getElementById("cardHolderName").value;
+        if (!cardName) {
+          showStatus("Please enter Cardholder Name", true);
+          return;
+        }
+        // Handle Card
+        await confirmPayment({ name: cardName, email, phone, address });
+      }
+    }
+
+    // Step 2: Confirm Payment (Card Only)
+    async function confirmPayment(customerDetails) {
+      if (!paymentIntent || !xpayInstance) return;
+
+      const payBtn = document.getElementById("payBtn");
+      payBtn.disabled = true;
+      payBtn.textContent = "Processing...";
+      showStatus("Opening Secure Channel...", false);
+
+      try {
+        // Use XPay SDK to confirm the payment
+        const result = await xpayInstance.confirmPayment(
+          "card",
+          paymentIntent.clientSecret,
+          customerDetails, // contains { name: cardHolderName, ... }
+          paymentIntent.encryptionKey
+        );
+
+        if (result.error) {
+          throw new Error(result.message || "Payment Failed");
+        }
+
+        // result.message usually contains "Payment successfully processed"
+        showStatus("Payment Successful! Finalizing Order...", false);
+        await finalizeOrder(paymentIntent.id, customerDetails, 'Card', paymentIntent.orderId);
+
+      } catch (err) {
+        showStatus(err.message, true);
+        payBtn.disabled = false;
+        payBtn.textContent = "Try Again";
+      }
+    }
+
+    // --- PRODUCT GALLERY LOGIC ---
+    let currentProduct = null;
+    let currentSlideIndex = 0;
+
+    // Config: Images per product (Will be populated with real paths)
+    // Note: Using main images for all slots due to generation quota limits
+    const productImages = {
+      headphones: ['headphones.png', 'headphones_side.png', 'headphones.png'],
+      watch: ['watch.png', 'watch.png', 'watch.png'],
+      keyboard: ['keyboard.png', 'keyboard.png', 'keyboard.png']
+    };
+
+    function openProductGallery(productId) {
+      currentProduct = productId;
+      currentSlideIndex = 0;
+
+      const modal = document.getElementById('galleryModal');
+      modal.style.display = 'flex';
+
+      updateGalleryImage();
+    }
+
+    function closeGallery() {
+      document.getElementById('galleryModal').style.display = 'none';
+      currentProduct = null;
+    }
+
+    function changeSlide(direction) {
+      if (!currentProduct) return;
+      const images = productImages[currentProduct];
+
+      currentSlideIndex += direction;
+
+      if (currentSlideIndex >= images.length) currentSlideIndex = 0;
+      if (currentSlideIndex < 0) currentSlideIndex = images.length - 1;
+
+      updateGalleryImage();
+    }
+
+    function updateGalleryImage() {
+      if (!currentProduct) return;
+      const images = productImages[currentProduct];
+      const imgPath = images[currentSlideIndex];
+
+      const imgEl = document.getElementById('galleryImage');
+      imgEl.src = imgPath;
+      // Handle missing images softly
+      imgEl.onerror = () => { imgEl.src = images[0]; }; // Fallback to main image
+
+      document.getElementById('galleryCounter').textContent = `${currentSlideIndex + 1} / ${images.length}`;
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function (event) {
+      const modal = document.getElementById('galleryModal');
+      if (event.target === modal) {
+        closeGallery();
+      }
+    }
+
+    // Step 3: Finalize Order
+    async function finalizeOrder(intentId, customerDetails, paymentMethod, orderId = null) {
+      showStatus("Finalizing Order...", false);
+
+      try {
+        const res = await fetch("/api/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paymentIntentId: intentId,
+            paymentMethod: paymentMethod, // 'Card' or 'COD'
+            orderId: orderId, // Pass the synchronized ID
+            orderDetails: {
+              items: cart,
+              customer: customerDetails
+            }
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showStatus(`Order Placed! ID: ${data.order.orderId}`, false);
+          document.getElementById("payBtn").textContent = "Success";
+          document.getElementById("payBtn").style.background = "#22c55e";
+
+          // Clear cart
+          cart = [];
+
+          // Reset UI slightly
+          setTimeout(() => {
+            updateCartUI();
+            document.getElementById("payBtn").disabled = false;
+          }, 3000);
+        } else {
+          throw new Error(data.error || "Order creation failed");
+        }
+      } catch (err) {
+        showStatus("Order Error: " + err.message, true);
+      }
+    }
+
+    function showStatus(msg, isError) {
+      const box = document.getElementById("statusBox");
+      box.className = "status-box visible " + (isError ? "error" : "success");
+      box.textContent = msg;
+    }
+  </script>
+</body>
+
+</html>

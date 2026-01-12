@@ -1,0 +1,21 @@
+{
+  "name": "integration",
+  "version": "1.0.0",
+  "description": "Full-stack Node.js app with Express gateway, backend service, and static frontend",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "start:backend": "node src/backend.js",
+    "start:gateway": "node src/gateway.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "node-fetch-commonjs": "^3.3.2"
+  }
+}
